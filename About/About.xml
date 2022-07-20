@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+   <name>Scrollable Gizmos</name>
+   <author>2blockdude</author>
+   <url></url>
+   <description>Puts gizmos in a scroll view so they won't take up the entire screen.</description>
+   <packageId>Blockdude.ScrollableGizmos</packageId>
+   <supportedVersions>
+      <li>1.3</li>
+   </supportedVersions>
+   <loadAfter>
+      <li>Ludeon.RimWorld</li>
+   </loadAfter>
+</ModMetaData>
