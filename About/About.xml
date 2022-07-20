@@ -2,7 +2,7 @@
 <ModMetaData>
    <name>Scrollable Gizmos</name>
    <author>2blockdude</author>
-   <url></url>
+   <url>https://github.com/blockdude/csharp-rimworld-scrollable-gizmos</url>
    <description>Puts gizmos in a scroll view so they won't take up the entire screen.</description>
    <packageId>Blockdude.ScrollableGizmos</packageId>
    <supportedVersions>
