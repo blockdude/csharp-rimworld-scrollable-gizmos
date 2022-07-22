@@ -41,6 +41,9 @@ namespace ScrollableGizmos
         public const float bottomOffset = 35f;
         public const float buttonSize = 75f;
 
+        // personal constants
+        public const int UIOffset = 0;
+
         // lists for gizmo count
         public static List<Gizmo> tmpAllGizmos = new List<Gizmo>();
         public static List<List<Gizmo>> gizmoGroups = new List<List<Gizmo>>();
@@ -81,7 +84,6 @@ namespace ScrollableGizmos
 
         public static int GetGizmoCount()
         {
-            // calculate viewHeight
             int gizmoCount = 0;
             for (int i = 0; i < gizmoGroups.Count; i++)
             {
@@ -92,66 +94,60 @@ namespace ScrollableGizmos
         }
 
         // patch to begining of gizmo drawing
-        public static void Prefix(ref IEnumerable<Gizmo> gizmos, ref float startX)
+        public static void Prefix(IEnumerable<Gizmo> gizmos, float startX)
         {
             CacheGizmos(gizmos);
 
             // calculate viewHeight
             int gizmoCount = GetGizmoCount();
-
-            // height of full scroll view
-            float viewHeight;
-
-            // height of out rect for scroll view
-            float outHeight;
-
-            // total columns of gizmos
-            int gizmoColumnCount;
-
-            // total rows of gizmos
-            int gizmoRowCount;
-
-            // spacing that is set in the gizmo
             float gizmoSpacing = GizmoGridDrawer.GizmoSpacing.x;
 
-            // calculate gizmo column count (unreliable solution for different width gizmos)
-            gizmoColumnCount = 0;
+            float widthTracker = 0;
+            int rowCount = 1;
             for (int i = 0; i < gizmoCount; i++)
             {
-                gizmoColumnCount++;
-                if ((gizmoColumnCount * (buttonSize + gizmoSpacing)) > (UI.screenWidth - startX - (sideOffset - gizmoSpacing)))
+                // get width of gizmo
+                float gizmoWidth = gizmoGroups[i][0].GetWidth(float.MaxValue) + gizmoSpacing;
+                widthTracker += gizmoWidth;
+
+                if (widthTracker > (UI.screenWidth - startX - (sideOffset - gizmoSpacing)))
                 {
-                    gizmoColumnCount--;
-                    break;
+                    rowCount++;
+                    widthTracker = gizmoWidth;
                 }
             }
 
-            // calculate gizmo row count
-            gizmoRowCount = Mathf.CeilToInt((float)((float)gizmoCount / (float)gizmoColumnCount));
-
             // calulate rect heights for scroll view
-            viewHeight = gizmoRowCount * (buttonSize + gizmoSpacing);
-            outHeight = Mathf.Min(viewHeight, GizmoSettings.outHeight);
+            float viewHeight = rowCount * (buttonSize + gizmoSpacing);
+            float outHeight = Mathf.Min(viewHeight, GizmoSettings.outHeight);
 
             // add 10 so top of gizmos are not cut off so it looks nice
             viewHeight += 10f;
             outHeight += 10f;
 
+            // rendering hack
+            UI.screenHeight += UIOffset;
+
+            int screenHeight = UI.screenHeight;
+            int screenWidth = UI.screenWidth;
+
             // create rects
-            Rect gizmoGroup = new Rect(0f, bottomOffset, Screen.width - scrollBarOffset - sideOffset, Screen.height);
-            Rect gizmoOut = new Rect(0f, Screen.height - outHeight - bottomOffset, Screen.width - sideOffset, outHeight);
-            Rect gizmoView = new Rect(0f, Screen.height - viewHeight, Screen.width - sideOffset - scrollBarOffset, viewHeight);
+            Rect gizmoOut = new Rect(startX, screenHeight - outHeight - bottomOffset - UIOffset, screenWidth - sideOffset - startX, outHeight);
+            Rect gizmoView = new Rect(startX, screenHeight - viewHeight, screenWidth - sideOffset - scrollBarOffset - startX, viewHeight);
+            //Rect gizmoGroup = new Rect(0f, bottomOffset, screenWidth - scrollBarOffset - sideOffset, screenHeight);
+            Rect gizmoGroup = new Rect(0f, bottomOffset, screenWidth, screenHeight);
 
             // start scroll
             Widgets.BeginScrollView(gizmoOut, ref scroll, gizmoView, GizmoSettings.showScrollBar);
-            GUI.BeginGroup(gizmoGroup);
+            Widgets.BeginGroup(gizmoGroup);
         }
 
         // patch to end of gizmo drawing
         public static void Postfix()
         {
-            GUI.EndGroup();
+            Widgets.EndGroup();
             Widgets.EndScrollView();
+            UI.screenHeight -= UIOffset;
         }
     }
 }
