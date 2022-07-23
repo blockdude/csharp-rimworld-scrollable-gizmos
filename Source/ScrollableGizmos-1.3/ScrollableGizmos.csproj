@@ -61,8 +61,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GizmoPatch.cs" />
-    <Compile Include="GizmoSettings.cs" />
+    <Compile Include="ScrollableGizmoPatch.cs" />
+    <Compile Include="ScrollableGizmoSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
