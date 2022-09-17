@@ -171,12 +171,12 @@ namespace ScrollableGizmos
 
             // start scroll
             Widgets.BeginScrollView(gizmoOut, ref scroll, gizmoView, ScrollableGizmoSettings.showScrollBar);
-            Widgets.BeginGroup(gizmoGroup);
+            GUI.BeginGroup(gizmoGroup);
         }
 
         public static void Postfix()
         {
-            Widgets.EndGroup();
+            GUI.EndGroup();
             Widgets.EndScrollView();
             UI.screenWidth -= ScrollableGizmoSettings.outWidthOffset;
         }
