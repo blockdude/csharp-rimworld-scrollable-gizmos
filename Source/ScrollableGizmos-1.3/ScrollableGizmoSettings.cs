@@ -14,7 +14,7 @@ namespace ScrollableGizmos
         public static bool doFixVerticalScrollMouseWheel = true;
         public static bool doFixVerticalScrollClickAndDrag = true;
 
-        public static float outHeight = 160;
+        public static float outHeight = 180;
         public static int outWidthOffset = -16;
         public static float scrollSpeed = 13.33f;
 
@@ -67,7 +67,7 @@ namespace ScrollableGizmos
             listingStandard.CheckboxLabeled("Show scrollbar", ref ScrollableGizmoSettings.showScrollBar);
             listingStandard.CheckboxLabeled("Try and fix scrolling mouse wheel (scroll speed needs this enabled to work) (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollMouseWheel);
             listingStandard.CheckboxLabeled("Try and fix scrolling click and drag (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag);
-            listingStandard.TextFieldNumericLabeled("Scroll view height (default: 160)                                                          ", ref ScrollableGizmoSettings.outHeight, ref bufferOutHeight);
+            listingStandard.TextFieldNumericLabeled("Scroll view height (default: 180)                                                          ", ref ScrollableGizmoSettings.outHeight, ref bufferOutHeight);
             listingStandard.TextFieldNumericLabeled("Scroll speed (default: 13.33)                                                               ", ref ScrollableGizmoSettings.scrollSpeed, ref bufferScrollSpeed, min: float.MinValue, max: float.MaxValue);
             listingStandard.TextFieldNumericLabeled("Scroll view width offset (possible ui bugs if changed) (default: -16)    ", ref ScrollableGizmoSettings.outWidthOffset, ref bufferOutWidth, min: float.MinValue, max: float.MaxValue);
             listingStandard.CheckboxLabeled("Draw background (work in progress)", ref ScrollableGizmoSettings.drawBackground);
