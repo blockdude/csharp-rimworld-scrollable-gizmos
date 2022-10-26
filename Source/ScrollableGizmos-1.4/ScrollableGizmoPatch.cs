@@ -12,7 +12,7 @@ using HarmonyLib;
 namespace ScrollableGizmos
 {
     [StaticConstructorOnStartup]
-    [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
+    [HarmonyPatch]
     class ScrollableGizmoPatch
     {
         public static Harmony harmony;
@@ -73,7 +73,18 @@ namespace ScrollableGizmos
 			}
         }
 
-        public static void Prefix(ref float startX)
+        // hacky and indirect method to disable shrinkable gizmos (should find a different way like patching the command constructor)
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(Gizmo), "Visible", MethodType.Getter)]
+        public static void GizmoVisiblePatchPrefix(Gizmo __instance)
+        {
+            Command command = __instance as Command;
+            if (command != null) command.shrinkable = false;
+        }
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
+        public static void GizmoGridDrawerPatchPrefix(ref float startX)
         {
             UI.screenWidth += ScrollableGizmoSettings.outWidthOffset;
 
@@ -81,6 +92,7 @@ namespace ScrollableGizmos
             const float thetaOffset = 10f;
 
             // get heights
+            //float heightError = (GizmoGridDrawer.HeightDrawnRecently - bottomOffset) % (Gizmo.Height + GizmoGridDrawer.GizmoSpacing.y) * 0.78f;
             float viewHeight = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + thetaOffset;
             float outHeight = Mathf.Min(viewHeight, ScrollableGizmoSettings.outHeight + thetaOffset);
 
@@ -101,7 +113,9 @@ namespace ScrollableGizmos
             Widgets.BeginGroup(gizmoGroup);
         }
 
-        public static void Postfix()
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
+        public static void GizmoGridDrawerPatchPostfix()
         {
             Widgets.EndGroup();
             Widgets.EndScrollView();
