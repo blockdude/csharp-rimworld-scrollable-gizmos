@@ -19,7 +19,9 @@ namespace ScrollableGizmos
         public static float scrollSpeed = 13.33f;
 
         public static bool showScrollBar = true;
-        public static bool drawBackground = false;
+        public static bool drawBackground = true;
+
+        public static bool startScrollAtBottom = true;
 
         public override void ExposeData()
         {
@@ -31,6 +33,7 @@ namespace ScrollableGizmos
             Scribe_Values.Look(ref doFixVerticalScrollMouseWheel, "doFixVerticalScrollMouseWheel");
             Scribe_Values.Look(ref doFixVerticalScrollClickAndDrag, "doFixVerticalScrollClickAndDrag");
             Scribe_Values.Look(ref drawBackground, "drawBackground");
+            Scribe_Values.Look(ref startScrollAtBottom, "startScrollAtBottom");
             base.ExposeData();
 
             // patch and unpatch
@@ -63,14 +66,45 @@ namespace ScrollableGizmos
         {
             Listing_Standard listingStandard = new Listing_Standard();
             listingStandard.Begin(inRect);
+
             listingStandard.CheckboxLabeled("Enable scrollable gizmos", ref ScrollableGizmoSettings.enabled);
-            listingStandard.CheckboxLabeled("Show scrollbar", ref ScrollableGizmoSettings.showScrollBar);
+            listingStandard.Gap(24f);
+
+
+
+            listingStandard.GapLine();
+            listingStandard.Label("General Settings");
+            listingStandard.GapLine();
+
+            listingStandard.Gap(12f);
+            listingStandard.CheckboxLabeled("Show scrollbar (default: enabled)", ref ScrollableGizmoSettings.showScrollBar);
+            listingStandard.CheckboxLabeled("Draw background (default: enabled)", ref ScrollableGizmoSettings.drawBackground);
+            listingStandard.CheckboxLabeled("Start scroll view from bottom (default: enabled)", ref ScrollableGizmoSettings.startScrollAtBottom);
+            listingStandard.Gap(24f);
+
+
+
+            listingStandard.GapLine();
+            listingStandard.Label("Scroll View Settings");
+            listingStandard.GapLine();
+
+            listingStandard.Gap(12f);
+            listingStandard.TextFieldNumericLabeled("Scroll view height (default: 180)                                                          ", ref ScrollableGizmoSettings.outHeight, ref bufferOutHeight);
+            listingStandard.TextFieldNumericLabeled("Scroll view width offset (default: -16)                                                   ", ref ScrollableGizmoSettings.outWidthOffset, ref bufferOutWidth, min: float.MinValue, max: float.MaxValue);
+            listingStandard.TextFieldNumericLabeled("Scroll speed (default: 13.33)                                                               ", ref ScrollableGizmoSettings.scrollSpeed, ref bufferScrollSpeed, min: float.MinValue, max: float.MaxValue);
+            listingStandard.Gap(24f);
+
+
+
+            listingStandard.GapLine();
+            listingStandard.Label("Debug Settings");
+            listingStandard.GapLine();
+
+            listingStandard.Gap(12f);
             listingStandard.CheckboxLabeled("Try and fix scrolling mouse wheel (scroll speed needs this enabled to work) (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollMouseWheel);
             listingStandard.CheckboxLabeled("Try and fix scrolling click and drag (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag);
-            listingStandard.TextFieldNumericLabeled("Scroll view height (default: 180)                                                          ", ref ScrollableGizmoSettings.outHeight, ref bufferOutHeight);
-            listingStandard.TextFieldNumericLabeled("Scroll speed (default: 13.33)                                                               ", ref ScrollableGizmoSettings.scrollSpeed, ref bufferScrollSpeed, min: float.MinValue, max: float.MaxValue);
-            listingStandard.TextFieldNumericLabeled("Scroll view width offset (possible ui bugs if changed) (default: -16)    ", ref ScrollableGizmoSettings.outWidthOffset, ref bufferOutWidth, min: float.MinValue, max: float.MaxValue);
-            listingStandard.CheckboxLabeled("Draw background (work in progress)", ref ScrollableGizmoSettings.drawBackground);
+            listingStandard.Gap(24f);
+
             listingStandard.End();
             base.DoSettingsWindowContents(inRect);
         }

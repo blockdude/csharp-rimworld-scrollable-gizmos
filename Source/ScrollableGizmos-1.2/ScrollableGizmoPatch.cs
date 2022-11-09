@@ -29,12 +29,16 @@ namespace ScrollableGizmos
         private static Vector2 scroll = new Vector2();
 
         // some constants found in gizmo code
-        private const float scrollBarOffset = 16f;
+        private const float scrollBarWidth = 16f;
         private const float sideOffset = 147f;
         private const float bottomOffset = 35f;
+        private const float arbitraryOffset = 10f;
 
         // track if the scroll bar is being clicked and dragged
         private static bool selected = false;
+
+        // testing
+        private static float heightDrawnRecently = 0f;
 
         public static void FixVerticalScrollMouseWheel(Rect outRect, Rect viewRect)
         {
@@ -52,7 +56,7 @@ namespace ScrollableGizmos
             if (!ScrollableGizmoSettings.showScrollBar)
                 return;
 
-            Rect scrollBarArea = new Rect(outRect.x + outRect.width - scrollBarOffset, outRect.y, scrollBarOffset, outRect.height);
+            Rect scrollBarArea = new Rect(outRect.x + outRect.width - scrollBarWidth, outRect.y, scrollBarWidth, outRect.height);
             //float scrollBarHeight = (viewRect.height / outRect.height);
             //Rect scrollBar = new Rect(outRect.x + outRect.width - scrollBarOffset, outRect.y, scrollBarOffset, scrollBarHeight);
 
@@ -86,20 +90,16 @@ namespace ScrollableGizmos
         [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
         public static void GizmoGridDrawerPatchPrefix(ref float startX)
         {
-            UI.screenWidth += ScrollableGizmoSettings.outWidthOffset;
-
-            // arbitrary offset
-            const float thetaOffset = 10f;
+            startX -= ScrollableGizmoSettings.outWidthOffset;
 
             // get heights
-            //float heightError = (GizmoGridDrawer.HeightDrawnRecently - bottomOffset) % (Gizmo.Height + GizmoGridDrawer.GizmoSpacing.y) * 0.78f;
-            float viewHeight = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + thetaOffset;
-            float outHeight = Mathf.Min(viewHeight, ScrollableGizmoSettings.outHeight + thetaOffset);
+            float viewHeight = Mathf.Clamp(GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset, 0f, UI.screenHeight - bottomOffset);
+            float outHeight = Mathf.Min(viewHeight, ScrollableGizmoSettings.outHeight + arbitraryOffset);
 
             // create rects
-            Rect gizmoOut = new Rect(startX - thetaOffset, UI.screenHeight - outHeight - bottomOffset, UI.screenWidth - sideOffset - startX + scrollBarOffset + thetaOffset, outHeight);
-            Rect gizmoView = new Rect(startX - thetaOffset, UI.screenHeight - viewHeight, UI.screenWidth - sideOffset - scrollBarOffset - startX + thetaOffset, viewHeight);
-            Rect gizmoGroup = new Rect(0f, bottomOffset, UI.screenWidth, UI.screenHeight - bottomOffset);
+            Rect gizmoOut = new Rect(startX - arbitraryOffset + ScrollableGizmoSettings.outWidthOffset, UI.screenHeight - outHeight - bottomOffset, UI.screenWidth - sideOffset - startX + scrollBarWidth + arbitraryOffset, outHeight);
+            Rect gizmoView = new Rect(startX - arbitraryOffset + ScrollableGizmoSettings.outWidthOffset, UI.screenHeight - viewHeight, UI.screenWidth - sideOffset - scrollBarWidth - startX + arbitraryOffset, viewHeight);
+            Rect gizmoGroup = new Rect(ScrollableGizmoSettings.outWidthOffset, bottomOffset, UI.screenWidth, UI.screenHeight - bottomOffset);
 
             // hacky scroll fix
             if (ScrollableGizmoSettings.doFixVerticalScrollMouseWheel) FixVerticalScrollMouseWheel(gizmoOut, gizmoView);
@@ -119,7 +119,17 @@ namespace ScrollableGizmos
         {
             GUI.EndGroup();
             Widgets.EndScrollView();
-            UI.screenWidth -= ScrollableGizmoSettings.outWidthOffset;
+
+            // put scroll at bottom when there is a height change
+            // this is the best i can do at the moment for detecting change of gizmos
+            if (ScrollableGizmoSettings.startScrollAtBottom)
+            {
+                if (heightDrawnRecently != GizmoGridDrawer.HeightDrawnRecently)
+                    scroll.y = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset;
+            }
+
+            // update cached variables
+            heightDrawnRecently = GizmoGridDrawer.HeightDrawnRecently;
         }
     }
 }

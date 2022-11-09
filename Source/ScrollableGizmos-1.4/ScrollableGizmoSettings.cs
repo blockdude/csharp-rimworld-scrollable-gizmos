@@ -79,7 +79,7 @@ namespace ScrollableGizmos
             listingStandard.Gap(12f);
             listingStandard.CheckboxLabeled("Show scrollbar (default: enabled)", ref ScrollableGizmoSettings.showScrollBar);
             listingStandard.CheckboxLabeled("Draw background (default: enabled)", ref ScrollableGizmoSettings.drawBackground);
-            listingStandard.CheckboxLabeled("Start scroll view from bottom ( default: enabled)", ref ScrollableGizmoSettings.startScrollAtBottom);
+            listingStandard.CheckboxLabeled("Start scroll view from bottom (default: enabled)", ref ScrollableGizmoSettings.startScrollAtBottom);
             listingStandard.Gap(24f);
 
 
