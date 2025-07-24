@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using RimWorld;
 using Verse;
-using Verse.Steam;
 using UnityEngine;
 using HarmonyLib;
 using RimWorld.Planet;
+using RimWorld;
 
 namespace ScrollableGizmos
 {
@@ -30,6 +26,7 @@ namespace ScrollableGizmos
         private static Vector2 scroll = new Vector2();
 
         // some constants found in gizmo code
+        private const float gizmoSize = 75f;
         private const float scrollBarWidth = 16f;
         private const float sideOffset = 147f;
         private const float bottomOffset = 35f;
@@ -43,6 +40,9 @@ namespace ScrollableGizmos
 
         public static void FixVerticalScrollMouseWheel(Rect outRect, Rect viewRect)
         {
+            if (!ScrollableGizmoSettings.doFixVerticalScrollMouseWheel)
+                return;
+
             if (Event.current.type == EventType.ScrollWheel && outRect.Contains(Event.current.mousePosition) && !selected)
             {
                 scroll.y += Event.current.delta.y * ScrollableGizmoSettings.scrollSpeed;
@@ -53,6 +53,9 @@ namespace ScrollableGizmos
 
         public static void FixVerticalScrollClickAndDrag(Rect outRect, Rect viewRect)
         {
+            if (!ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag)
+                return;
+
             // don't try and fix if the scroll bar is not even shown
             if (!ScrollableGizmoSettings.showScrollBar)
                 return;
@@ -78,66 +81,88 @@ namespace ScrollableGizmos
 			}
         }
 
-        public static bool IsInWorldMenu()
+        public static void DrawGizmoBackground(Rect outRect)
         {
-            return Find.World.renderer.wantedMode != WorldRenderMode.Planet;
+            if (!ScrollableGizmoSettings.drawBackground)
+                return;
+
+            Widgets.DrawWindowBackground(outRect);
         }
 
-        // hacky and indirect method to disable shrinkable gizmos (should find a different way like patching the command constructor)
-        [HarmonyPrefix]
-        [HarmonyPatch(typeof(Gizmo), "Visible", MethodType.Getter)]
-        public static void GizmoVisiblePatchPrefix(Gizmo __instance)
+        public static void UpdateScrollPosition()
         {
-            Command command = __instance as Command;
-            if (command != null) command.shrinkable = false;
+            if (ScrollableGizmoSettings.startScrollAtBottom && (heightDrawnRecently != GizmoGridDrawer.HeightDrawnRecently))
+                scroll.y = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset;
+        }
+
+        public static bool IsInWorldMenu()
+        {
+            return Find.World.renderer.wantedMode == WorldRenderMode.Planet;
+        }
+
+        public static bool IsInArchitectMenu()
+        {
+            return Find.MainTabsRoot.OpenTab == MainButtonDefOf.Architect;
+        }
+
+        public static bool CanDoScrollableGizmos()
+        {
+            return ((ScrollableGizmoSettings.architectMenuOnly && IsInArchitectMenu()) || !ScrollableGizmoSettings.architectMenuOnly) && !IsInWorldMenu();
         }
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
-        public static void GizmoGridDrawerPatchPrefix(ref IEnumerable<Gizmo> gizmos, ref float startX)
+        public static void GizmoGridDrawerPatchPrefix(IEnumerable<Gizmo> gizmos, ref float startX, ref Gizmo mouseoverGizmo, Func<Gizmo, bool> customActivatorFunc, Func<Gizmo, bool> highlightFunc, Func<Gizmo, bool> lowlightFunc, bool multipleSelected)
         {
+            if (!CanDoScrollableGizmos())
+                return;
+
+            foreach (Gizmo gizmo in gizmos)
+            {
+                Command command = gizmo as Command;
+                if (command == null) continue;
+                command.shrinkable = false;
+            }
+
             startX -= ScrollableGizmoSettings.outWidthOffset;
 
             // get heights
-            float viewHeight = Mathf.Clamp(GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset, 0f, UI.screenHeight - bottomOffset);
+            float viewHeight = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset;
             float outHeight = Mathf.Min(viewHeight, ScrollableGizmoSettings.outHeight + arbitraryOffset);
 
             // create rects
-            Rect gizmoOut = new Rect(startX - arbitraryOffset + ScrollableGizmoSettings.outWidthOffset, UI.screenHeight - outHeight - bottomOffset, UI.screenWidth - sideOffset - startX + scrollBarWidth + arbitraryOffset, outHeight);
-            Rect gizmoView = new Rect(startX - arbitraryOffset + ScrollableGizmoSettings.outWidthOffset, UI.screenHeight - viewHeight, UI.screenWidth - sideOffset - scrollBarWidth - startX + arbitraryOffset, viewHeight);
-            Rect gizmoGroup = new Rect(ScrollableGizmoSettings.outWidthOffset, bottomOffset, UI.screenWidth, UI.screenHeight - bottomOffset);
+            Rect gizmoOut = new Rect(
+                startX - arbitraryOffset + ScrollableGizmoSettings.outWidthOffset,
+                UI.screenHeight - outHeight - bottomOffset,
+                UI.screenWidth - sideOffset - startX + scrollBarWidth + arbitraryOffset,
+                outHeight);
+
+            Rect gizmoView = new Rect(
+                startX - arbitraryOffset,
+                UI.screenHeight - viewHeight - (gizmoSize / 2f),
+                UI.screenWidth - sideOffset - scrollBarWidth - startX + arbitraryOffset,
+                viewHeight);
 
             // hacky scroll fix
-            if (ScrollableGizmoSettings.doFixVerticalScrollMouseWheel) FixVerticalScrollMouseWheel(gizmoOut, gizmoView);
-            if (ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag) FixVerticalScrollClickAndDrag(gizmoOut, gizmoView);
+            FixVerticalScrollMouseWheel(gizmoOut, gizmoView);
+            FixVerticalScrollClickAndDrag(gizmoOut, gizmoView);
 
             // draw background
-            //MainButtonWorker_ToggleWorld
-            if (ScrollableGizmoSettings.drawBackground)
-                if (IsInWorldMenu())
-                    Widgets.DrawWindowBackground(gizmoOut);
+            DrawGizmoBackground(gizmoOut);
 
             // start scroll
             Widgets.BeginScrollView(gizmoOut, ref scroll, gizmoView, ScrollableGizmoSettings.showScrollBar);
-            Widgets.BeginGroup(gizmoGroup);
         }
 
         [HarmonyPostfix]
         [HarmonyPatch(typeof(GizmoGridDrawer), nameof(GizmoGridDrawer.DrawGizmoGrid))]
         public static void GizmoGridDrawerPatchPostfix()
         {
-            Widgets.EndGroup();
+            if (!CanDoScrollableGizmos())
+                return;
+
             Widgets.EndScrollView();
-
-            // put scroll at bottom when there is a height change
-            // this is the best i can do at the moment for detecting change of gizmos
-            if (ScrollableGizmoSettings.startScrollAtBottom)
-            {
-                if (heightDrawnRecently != GizmoGridDrawer.HeightDrawnRecently)
-                    scroll.y = GizmoGridDrawer.HeightDrawnRecently - bottomOffset + arbitraryOffset;
-            }
-
-            // update cached variables
+            UpdateScrollPosition();
             heightDrawnRecently = GizmoGridDrawer.HeightDrawnRecently;
         }
     }

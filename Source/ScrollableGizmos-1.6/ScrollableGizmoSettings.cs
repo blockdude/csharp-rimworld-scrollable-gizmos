@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Verse;
+﻿using Verse;
 using UnityEngine;
 
 namespace ScrollableGizmos
@@ -12,7 +8,7 @@ namespace ScrollableGizmos
         public static bool enabled = true;
 
         public static bool doFixVerticalScrollMouseWheel = true;
-        public static bool doFixVerticalScrollClickAndDrag = true;
+        public static bool doFixVerticalScrollClickAndDrag = false;
 
         public static float outHeight = 180;
         public static int outWidthOffset = -16;
@@ -22,6 +18,7 @@ namespace ScrollableGizmos
         public static bool drawBackground = true;
 
         public static bool startScrollAtBottom = true;
+        public static bool architectMenuOnly = false;
 
         public override void ExposeData()
         {
@@ -34,6 +31,7 @@ namespace ScrollableGizmos
             Scribe_Values.Look(ref doFixVerticalScrollClickAndDrag, "doFixVerticalScrollClickAndDrag");
             Scribe_Values.Look(ref drawBackground, "drawBackground");
             Scribe_Values.Look(ref startScrollAtBottom, "startScrollAtBottom");
+            Scribe_Values.Look(ref architectMenuOnly, "architectMenuOnly");
             base.ExposeData();
 
             // patch and unpatch
@@ -80,6 +78,7 @@ namespace ScrollableGizmos
             listingStandard.CheckboxLabeled("Show scrollbar (default: enabled)", ref ScrollableGizmoSettings.showScrollBar);
             listingStandard.CheckboxLabeled("Draw background (default: enabled)", ref ScrollableGizmoSettings.drawBackground);
             listingStandard.CheckboxLabeled("Start scroll view from bottom (default: enabled)", ref ScrollableGizmoSettings.startScrollAtBottom);
+            listingStandard.CheckboxLabeled("Scrollable gizmos for architect menu only (default: disabled)", ref ScrollableGizmoSettings.architectMenuOnly);
             listingStandard.Gap(24f);
 
 
@@ -102,7 +101,7 @@ namespace ScrollableGizmos
 
             listingStandard.Gap(12f);
             listingStandard.CheckboxLabeled("Try and fix scrolling mouse wheel (scroll speed needs this enabled to work) (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollMouseWheel);
-            listingStandard.CheckboxLabeled("Try and fix scrolling click and drag (default: enabled)", ref ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag);
+            listingStandard.CheckboxLabeled("Try and fix scrolling click and drag (default: disabled)", ref ScrollableGizmoSettings.doFixVerticalScrollClickAndDrag);
             listingStandard.Gap(24f);
 
             listingStandard.End();
